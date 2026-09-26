@@ -34,20 +34,70 @@ async function signOut() {
   window.location.href = "/";
 }
 
-function Header({ user }) {
+function SidebarNav({ tab, setTab, onNavigate }) {
+  return (
+    <>
+      <nav className="nb-nav">
+        {NAV.map((item) => (
+          <button
+            key={item.key}
+            className="nb-nav__item"
+            aria-current={tab === item.key ? "page" : undefined}
+            onClick={() => { setTab(item.key); onNavigate && onNavigate(); }}
+            type="button"
+            data-testid={`nav-${item.key}`}
+          >
+            <NavIcon>{item.icon}</NavIcon>
+            {item.label}
+          </button>
+        ))}
+      </nav>
+      <div className="nb-sidebar__footer">
+        <span className="nb-blueprint-button"><span>Zero fees · Multi-chain</span></span>
+      </div>
+    </>
+  );
+}
+
+function Header({ user, onMenu }) {
   const name = (user && (user.name || user.username || user.email)) || "Your profile";
   const initials = name.trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
   return (
     <header className="nb-app-header">
-      <div className="nb-app-header__start">
+      <div className="nb-app-header__start" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <button className="nb-mobile-menu" type="button" aria-label="Open navigation" onClick={onMenu} data-testid="mobile-menu-button">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+        </button>
         <a className="nb-app-header__home" href="/app" aria-label="Bay Pay home">
           <img className="nb-wordmark__img" src="/images/baypay-logo-white.png" alt="Bay Pay" />
         </a>
       </div>
-      <button type="button" className="nb-profile-trigger" aria-label={`User profile: ${name}`} onClick={signOut} title="Sign out" data-testid="signout-button">
+      <button type="button" className="nb-profile-trigger" aria-label={`Sign out ${name}`} onClick={signOut} title="Sign out" data-testid="signout-button">
         <span className="nb-profile-avatar" aria-hidden="true">{initials || "?"}</span>
       </button>
     </header>
+  );
+}
+
+function MobileDrawer({ tab, setTab, onClose }) {
+  return (
+    <div
+      onClick={onClose}
+      data-testid="mobile-nav-scrim"
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 80 }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        data-testid="mobile-nav"
+        style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "min(20rem, 84vw)", background: "var(--nb-bg)", borderRight: "1px solid var(--nb-border)", zIndex: 81, display: "flex", flexDirection: "column", gap: "0.75rem", padding: "1rem", overflowY: "auto" }}
+      >
+        <div className="nb-mobile-navigation__header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <img className="nb-wordmark__img" src="/images/baypay-logo-white.png" alt="Bay Pay" />
+          <button className="nb-mobile-menu nb-mobile-menu--close" type="button" aria-label="Close navigation" onClick={onClose} data-testid="mobile-nav-close">✕</button>
+        </div>
+        <SidebarNav tab={tab} setTab={setTab} onNavigate={onClose} />
+      </div>
+    </div>
   );
 }
 
@@ -68,6 +118,7 @@ function SignInPrompt({ error }) {
 
 export default function AppShell({ user }) {
   const [tab, setTab] = useState("overview");
+  const [navOpen, setNavOpen] = useState(false);
   const { token, loading, error, needsSignIn } = useElementsToken();
   const acc = useAccount(!!token && !needsSignIn);
 
@@ -95,30 +146,14 @@ export default function AppShell({ user }) {
     <WhopElements appearance={monochromeAppearance} elements={elements} key={accountId}>
       <Wallet accountId={accountId} accessToken={token} currency="usd" key={accountId}>
         <div className="nb-app" data-testid="app-shell">
-          <Header user={user} />
+          <Header user={user} onMenu={() => setNavOpen(true)} />
           <div className="nb-shell">
             <aside className="nb-sidebar">
-              <nav className="nb-nav">
-                {NAV.map((item) => (
-                  <button
-                    key={item.key}
-                    className="nb-nav__item"
-                    aria-current={tab === item.key ? "page" : undefined}
-                    onClick={() => setTab(item.key)}
-                    type="button"
-                    data-testid={`nav-${item.key}`}
-                  >
-                    <NavIcon>{item.icon}</NavIcon>
-                    {item.label}
-                  </button>
-                ))}
-              </nav>
-              <div className="nb-sidebar__footer">
-                <span className="nb-blueprint-button"><span>Zero fees · Multi-chain</span></span>
-              </div>
+              <SidebarNav tab={tab} setTab={setTab} />
             </aside>
             {screen}
           </div>
+          {navOpen ? <MobileDrawer tab={tab} setTab={setTab} onClose={() => setNavOpen(false)} /> : null}
         </div>
       </Wallet>
     </WhopElements>

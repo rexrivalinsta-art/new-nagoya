@@ -351,11 +351,11 @@ async def create_entity(request: Request):
 
 @api.get("/cards")
 async def cards_state(request: Request, accountId: str = ""):
-    if not accountId.startswith("biz_"):
-        return JSONResponse({"error": "accountId must be a biz_ id."}, status_code=400)
     token, apply = await valid_access_token(request)
     if not token:
         return JSONResponse({"error": "login required", "signedIn": False}, status_code=401)
+    if not accountId.startswith("biz_"):
+        return JSONResponse({"error": "accountId must be a biz_ id."}, status_code=400)
     async with httpx.AsyncClient(timeout=20) as client:
         r = await client.get(f"{API}/accounts/{accountId}", headers=api_headers(token))
     if r.is_error:
@@ -392,13 +392,13 @@ async def cards_state(request: Request, accountId: str = ""):
 
 @api.post("/cards")
 async def cards_apply(request: Request):
-    body = await request.json()
-    account_id = body.get("accountId", "")
-    if not account_id.startswith("biz_"):
-        return JSONResponse({"error": "accountId must be a biz_ id."}, status_code=400)
     token, apply = await valid_access_token(request)
     if not token:
         return JSONResponse({"error": "login required", "signedIn": False}, status_code=401)
+    body = await request.json() if request.headers.get("content-type", "").startswith("application/json") else {}
+    account_id = (body or {}).get("accountId", "")
+    if not account_id.startswith("biz_"):
+        return JSONResponse({"error": "accountId must be a biz_ id."}, status_code=400)
     async with httpx.AsyncClient(timeout=20) as client:
         r = await client.post(f"{API}/cards", headers=api_headers(token), json={"account_id": account_id})
     if r.is_error:
@@ -415,16 +415,17 @@ async def cards_apply(request: Request):
 
 @api.post("/cards/create")
 async def cards_create(request: Request):
-    body = await request.json()
+    token, apply = await valid_access_token(request)
+    if not token:
+        return JSONResponse({"error": {"message": "login required"}, "signedIn": False}, status_code=401)
+    body = await request.json() if request.headers.get("content-type", "").startswith("application/json") else {}
+    body = body or {}
     account_id = body.get("accountId", "")
     name = (body.get("name") or "").strip()
     if not account_id.startswith("biz_"):
         return JSONResponse({"error": {"message": "accountId must be a biz_ id."}}, status_code=400)
     if not name or len(name) > 30:
         return JSONResponse({"error": {"message": "Card name must be 1-30 characters."}}, status_code=400)
-    token, apply = await valid_access_token(request)
-    if not token:
-        return JSONResponse({"error": {"message": "login required"}, "signedIn": False}, status_code=401)
     payload = {"account_id": account_id, "name": name}
     if isinstance(body.get("spendLimit"), (int, float)) and body["spendLimit"] > 0:
         payload["spend_limit"] = body["spendLimit"]

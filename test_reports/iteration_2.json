@@ -1,0 +1,54 @@
+{
+  "summary": "Iteration 2 regression: backend smoke (12/12 pytest pass) + unauthenticated frontend rendering at mobile (390x844) and desktop (1920x800) for GET / and GET /app + static review of mobile-nav wiring in AppShell.jsx. No regressions. Authenticated mobile drawer NOT exercisable via automation (Whop OAuth interactive only), so verified statically per review-request instruction.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET/POST /api/cards & POST /api/cards/create", "issue": "accountId biz_ prefix validation still runs before auth (400 for non-biz unauth). Documented in iter-1; unchanged this iteration."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "static_review_appshell": {
+    "file": "/app/frontend/src/components/AppShell.jsx",
+    "findings": [
+      "Header renders .nb-mobile-menu button with data-testid='mobile-menu-button'; onClick={onMenu} correctly wired.",
+      "AppShell passes onMenu={() => setNavOpen(true)} into <Header/> — hamburger opens drawer as expected.",
+      "MobileDrawer renders when navOpen is true, with data-testid='mobile-nav' (drawer), data-testid='mobile-nav-scrim' (backdrop closes on click), data-testid='mobile-nav-close' (X button).",
+      "SidebarNav is reused inside the drawer; nav buttons carry data-testid='nav-overview|cards|send|deposit|withdraw'. onClick={() => { setTab(item.key); onNavigate && onNavigate(); }} where onNavigate === onClose in drawer context — tapping an item switches tab AND closes the drawer.",
+      "Drawer is only mounted inside the authenticated branch (after needsSignIn/loading/accountId checks) — matches the review-request note that it cannot be reached before Whop OAuth login.",
+      "CSS class .nb-mobile-menu (display:none >=64rem, inline-flex <64rem) is applied on both hamburger and close buttons — consistent with the sidebar hide breakpoint."
+    ],
+    "verdict": "Mobile-nav wiring is correct."
+  },
+  "regression_results": {
+    "backend_pytest": "12/12 PASS (test_baypay_api.py)",
+    "frontend_render": {
+      "mobile_390x844_root": "PASS - data-testid='landing-page' visible",
+      "mobile_390x844_app": "PASS - data-testid='app-signin' visible",
+      "desktop_1920x800_root": "PASS - data-testid='landing-page' visible",
+      "desktop_1920x800_app": "PASS - data-testid='app-signin' visible"
+    },
+    "console_errors": "Only 2 expected 401s from /api/auth/me and /api/whop/elements-token probes fired by the unauthenticated /app gate — benign, no crash, no JS errors."
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_baypay_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "MobileDrawer uses inline styles instead of the .nb-mobile-navigation CSS classes — functional but inconsistent with the rest of the codebase's CSS-first approach. Consider moving styles to CSS for theming and dark/light parity.",
+    "scrim onClick closes on any click that reaches it; drawer stops propagation — correct pattern, but consider adding Escape-key handler and focus trap for accessibility.",
+    "Hamburger button lacks aria-expanded={navOpen} — minor a11y improvement."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (12/12)", "frontend": "100% (4/4 unauth renders, mobile+desktop)"},
+  "test_credentials": "None — Whop OAuth interactive only.",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 2 confirms no regression from adding MobileDrawer to AppShell. Authenticated drawer (data-testid='mobile-nav', nav-* items, mobile-nav-close) can only be verified via a live Whop OAuth session or by injecting a mocked authenticated state — out of scope for automation. Backend gating unchanged.",
+  "rca of the issue": "N/A - regression only; mobile drawer wiring verified statically and looks correct."
+}

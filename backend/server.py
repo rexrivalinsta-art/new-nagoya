@@ -225,6 +225,222 @@ async def elements_token(request: Request):
     return resp
 
 
+CARD_API_VERSION_DATE = "2026-08-25-2"
+
+
+def api_headers(token):
+    return {"Accept": "application/json", "Content-Type": "application/json",
+            "Api-Version-Date": API_VERSION_DATE, "Authorization": f"Bearer {token}"}
+
+
+def parent_headers():
+    return {"Accept": "application/json", "Content-Type": "application/json",
+            "Api-Version-Date": API_VERSION_DATE, "Authorization": f"Bearer {os.environ['WHOP_API_KEY']}"}
+
+
+async def _list_accounts(client, headers):
+    rows, after = [], None
+    for _ in range(6):
+        params = {"first": 50}
+        if after:
+            params["after"] = after
+        r = await client.get(f"{API}/accounts", headers=headers, params=params)
+        if r.is_error:
+            return None
+        b = r.json()
+        rows += b.get("data", [])
+        pi = b.get("page_info") or {}
+        if not pi.get("has_next_page") or not pi.get("end_cursor"):
+            return rows
+        after = pi["end_cursor"]
+    return rows
+
+
+async def _live_company_ids(client, parent_id):
+    ids, after = set(), None
+    for _ in range(6):
+        params = {"first": 50, "parent_company_id": parent_id}
+        if after:
+            params["after"] = after
+        r = await client.get(f"{API}/companies", headers=parent_headers(), params=params)
+        if r.is_error:
+            return None
+        b = r.json()
+        for c in b.get("data", []):
+            if c.get("id"):
+                ids.add(c["id"])
+        pi = b.get("page_info") or {}
+        if not pi.get("has_next_page") or not pi.get("end_cursor"):
+            return ids
+        after = pi["end_cursor"]
+    return ids
+
+
+async def _neobank_parent(client):
+    r = await client.get(f"{API}/accounts/me", headers=parent_headers())
+    if r.is_error:
+        return None
+    b = r.json()
+    return {"id": b.get("id"), "title": b.get("title"), "logo_url": b.get("logo_url")} if b.get("id") else None
+
+
+@api.get("/entities")
+async def entities(request: Request):
+    token, apply = await valid_access_token(request)
+    if not token:
+        return JSONResponse({"error": "login required", "signedIn": False}, status_code=401)
+    async with httpx.AsyncClient(timeout=20) as client:
+        parent = await _neobank_parent(client)
+        if not parent:
+            return JSONResponse({"entities": [], "error": "Could not load your entities."})
+        # operator = can read parent balance with the user's own token
+        pr = await client.get(f"{API}/accounts/{parent['id']}", headers=api_headers(token))
+        operator = (not pr.is_error) and (pr.json().get("total_usd") is not None)
+        accounts = await _list_accounts(client, parent_headers() if operator else api_headers(token))
+        live = await _live_company_ids(client, parent["id"])
+        viewer = await client.get(f"{API}/users/me", headers=api_headers(token))
+    vjson = {} if viewer.is_error else viewer.json()
+    if accounts is None or live is None:
+        return JSONResponse({"entities": [], "error": "Could not load your entities."})
+    ents = [{"id": a["id"], "name": a.get("title") or a["id"], "imageUrl": a.get("logo_url"), "kind": "entity"}
+            for a in accounts if (a.get("parent_account") or {}).get("id") == parent["id"] and a["id"] in live]
+    if operator:
+        ents = [{"id": parent["id"], "name": parent.get("title") or "Overview", "imageUrl": parent.get("logo_url"), "kind": "overview"}] + ents
+    resp = JSONResponse({"entities": ents,
+                         "viewerName": (vjson.get("name") or vjson.get("username") or None)})
+    if apply:
+        apply(resp)
+    return resp
+
+
+@api.post("/entities")
+async def create_entity(request: Request):
+    token, apply = await valid_access_token(request)
+    if not token:
+        return JSONResponse({"error": "login required", "signedIn": False}, status_code=401)
+    async with httpx.AsyncClient(timeout=20) as client:
+        parent = await _neobank_parent(client)
+        if not parent:
+            return JSONResponse({"error": "Could not identify this neobank."}, status_code=502)
+        vr = await client.get(f"{API}/users/me", headers=api_headers(token))
+        viewer = {} if vr.is_error else vr.json()
+        email = viewer.get("email")
+        if not email:
+            who = await client.get(f"{OAUTH}/userinfo", headers={"Authorization": f"Bearer {token}"})
+            if not who.is_error:
+                email = who.json().get("email")
+        if not email:
+            return JSONResponse({"error": "This app needs permission to read your email.", "needsReauth": True}, status_code=403)
+        name = (viewer.get("username") or viewer.get("name") or "").strip()
+        digest = hashlib.sha256(f"{parent['id']}:{email.strip().lower()}".encode()).hexdigest()
+        created = await client.post(f"{API}/accounts", headers=parent_headers(), json={
+            "email": email,
+            "metadata": {"external_id": f"nb_{digest}"},
+            "title": (f"{name}'s account" if name else "Personal account"),
+        })
+    if created.is_error:
+        b = created.json() if created.headers.get("content-type", "").startswith("application/json") else {}
+        msg = (b.get("error") or {}).get("message") or b.get("message") or f"Could not create the entity ({created.status_code})."
+        return JSONResponse({"error": msg}, status_code=created.status_code)
+    a = created.json()
+    resp = JSONResponse({"entity": {"id": a["id"], "name": a.get("title"), "imageUrl": None, "kind": "entity"}}, status_code=201)
+    if apply:
+        apply(resp)
+    return resp
+
+
+@api.get("/cards")
+async def cards_state(request: Request, accountId: str = ""):
+    if not accountId.startswith("biz_"):
+        return JSONResponse({"error": "accountId must be a biz_ id."}, status_code=400)
+    token, apply = await valid_access_token(request)
+    if not token:
+        return JSONResponse({"error": "login required", "signedIn": False}, status_code=401)
+    async with httpx.AsyncClient(timeout=20) as client:
+        r = await client.get(f"{API}/accounts/{accountId}", headers=api_headers(token))
+    if r.is_error:
+        return JSONResponse({"error": "Could not read your card application."}, status_code=r.status_code)
+    acc = r.json()
+    caps = acc.get("capabilities") or {}
+    cards = acc.get("cards") or {}
+    status = cards.get("status")
+    ver = acc.get("verification") or {}
+    biz = (ver.get("business") or {}).get("status")
+    ind = (ver.get("individual") or {}).get("status")
+    id_approved = ((biz if biz and biz != "not_started" else ind) == "approved")
+    if not caps.get("card_issuing"):
+        scene = "unavailable"
+    elif not cards or not status:
+        scene = "intro"
+    elif status == "approved":
+        scene = "approved"
+    elif status == "needs_information":
+        scene = "needs_resubmit"
+    elif status == "needs_verification":
+        scene = "needs_identity"
+    elif status in ("denied", "locked", "canceled"):
+        scene = "declined"
+    else:
+        scene = "review"
+    resp = JSONResponse({"scene": scene, "status": status, "kind": cards.get("kind"),
+                         "identityApproved": id_approved,
+                         "appliesAsBusiness": biz == "approved", "outstanding": 0})
+    if apply:
+        apply(resp)
+    return resp
+
+
+@api.post("/cards")
+async def cards_apply(request: Request):
+    body = await request.json()
+    account_id = body.get("accountId", "")
+    if not account_id.startswith("biz_"):
+        return JSONResponse({"error": "accountId must be a biz_ id."}, status_code=400)
+    token, apply = await valid_access_token(request)
+    if not token:
+        return JSONResponse({"error": "login required", "signedIn": False}, status_code=401)
+    async with httpx.AsyncClient(timeout=20) as client:
+        r = await client.post(f"{API}/cards", headers=api_headers(token), json={"account_id": account_id})
+    if r.is_error:
+        b = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+        msg = (b.get("error") or {}).get("message") or b.get("message") or f"Could not apply ({r.status_code})."
+        t = "identity_required" if "identity" in msg.lower() else "upstream_error"
+        return JSONResponse({"error": {"message": msg, "type": t}}, status_code=r.status_code)
+    d = r.json()
+    resp = JSONResponse({"object": d.get("object"), "status": d.get("status")})
+    if apply:
+        apply(resp)
+    return resp
+
+
+@api.post("/cards/create")
+async def cards_create(request: Request):
+    body = await request.json()
+    account_id = body.get("accountId", "")
+    name = (body.get("name") or "").strip()
+    if not account_id.startswith("biz_"):
+        return JSONResponse({"error": {"message": "accountId must be a biz_ id."}}, status_code=400)
+    if not name or len(name) > 30:
+        return JSONResponse({"error": {"message": "Card name must be 1-30 characters."}}, status_code=400)
+    token, apply = await valid_access_token(request)
+    if not token:
+        return JSONResponse({"error": {"message": "login required"}, "signedIn": False}, status_code=401)
+    payload = {"account_id": account_id, "name": name}
+    if isinstance(body.get("spendLimit"), (int, float)) and body["spendLimit"] > 0:
+        payload["spend_limit"] = body["spendLimit"]
+        payload["spend_limit_frequency"] = body.get("spendLimitFrequency", "monthly")
+    async with httpx.AsyncClient(timeout=20) as client:
+        r = await client.post(f"{API}/cards", headers={**api_headers(token), "Api-Version-Date": CARD_API_VERSION_DATE}, json=payload)
+    d = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+    if r.is_error:
+        msg = (d.get("error") or {}).get("message") or d.get("message") or f"Could not create card ({r.status_code})."
+        return JSONResponse({"error": {"message": msg}}, status_code=r.status_code)
+    resp = JSONResponse(d, status_code=r.status_code)
+    if apply:
+        apply(resp)
+    return resp
+
+
 @api.get("/")
 async def root():
     return {"service": "baypay", "ok": True}

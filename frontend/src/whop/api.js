@@ -16,6 +16,43 @@ export async function fetchMe() {
   }
 }
 
+export async function fetchEntities() {
+  try {
+    const r = await fetch(`${API}/api/entities`, { credentials: "include" });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) { return null; }
+}
+
+export async function createEntity() {
+  try {
+    const r = await fetch(`${API}/api/entities`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: "{}" });
+    return await r.json();
+  } catch (e) { return { error: "Could not open your account." }; }
+}
+
+/* Resolve (or create) the user's Bay Pay business entity — cards/wallet run on it. */
+export function useAccount(enabled) {
+  const [s, setS] = useState({ loading: true, accountId: null, name: null, error: null });
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    (async () => {
+      const d = await fetchEntities();
+      if (cancelled) return;
+      const ents = (d && d.entities) || [];
+      const biz = ents.find((e) => e.kind === "entity") || ents.find((e) => e.kind === "overview");
+      if (biz) { setS({ loading: false, accountId: biz.id, name: biz.name, error: null }); return; }
+      const cr = await createEntity();
+      if (cancelled) return;
+      if (cr && cr.entity) setS({ loading: false, accountId: cr.entity.id, name: cr.entity.name, error: null });
+      else setS({ loading: false, accountId: null, name: null, error: (cr && cr.error) || "Could not open your account." });
+    })();
+    return () => { cancelled = true; };
+  }, [enabled]);
+  return s;
+}
+
 export function useElementsToken() {
   const [state, setState] = useState({
     loading: true, token: null, accountId: null, error: null, needsSignIn: false,

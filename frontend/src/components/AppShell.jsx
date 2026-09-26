@@ -3,7 +3,7 @@ import { WhopElements } from "@whop/elements-react";
 import { loadWhop } from "@whop/elements";
 import { Wallet } from "../whop/WalletProvider";
 import { monochromeAppearance } from "../whop/theme";
-import { useElementsToken, loginUrl, logoutUrl } from "../whop/api";
+import { useElementsToken, useAccount, loginUrl, logoutUrl } from "../whop/api";
 import Overview from "./screens/Overview";
 import Cards from "./screens/Cards";
 import Deposit from "./screens/Deposit";
@@ -68,12 +68,15 @@ function SignInPrompt({ error }) {
 
 export default function AppShell({ user }) {
   const [tab, setTab] = useState("overview");
-  const { token, accountId, loading, error, needsSignIn } = useElementsToken();
+  const { token, loading, error, needsSignIn } = useElementsToken();
+  const acc = useAccount(!!token && !needsSignIn);
 
   if (needsSignIn) return <SignInPrompt error={error} />;
-  if (loading || !token) return <div className="nb-loading" data-testid="app-loading">Opening your wallet…</div>;
+  if (loading || !token || acc.loading) return <div className="nb-loading" data-testid="app-loading">Opening your wallet…</div>;
+  if (!acc.accountId) return <div className="nb-loading" data-testid="app-error">{acc.error || "Could not open your Bay Pay account."}</div>;
 
-  const accountName = (user && (user.name || user.username)) || undefined;
+  const accountId = acc.accountId;
+  const accountName = acc.name || (user && (user.name || user.username)) || undefined;
 
   const screen = (
     <div className="nb-workspace">

@@ -1,0 +1,49 @@
+.nb-asset-page { display:flex; flex-direction:column; gap:24px; min-width:0; }
+.nb-asset-header { display:flex; align-items:center; gap:14px; margin-bottom:4px; }
+.nb-asset-header h1 { margin:0; font-size:28px; line-height:1.2; font-weight:500; letter-spacing:-.035em; }
+.nb-asset-header p { margin:6px 0 0; color:var(--nb-muted); font-size:13px; }
+.nb-asset-icon { width:44px; height:44px; border-radius:50%; display:grid; place-items:center; flex-shrink:0; font-size:30px; color:white; }
+.nb-asset-icon--btc { background:#f7931a; }
+.nb-asset-icon--xaut { background:#cfad53; font-weight:600; }
+.nb-asset-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(300px,360px); grid-template-areas:"market trade" "activity holdings"; gap:24px; align-items:stretch; }
+.nb-asset-market,.nb-asset-holdings,.nb-asset-trade { min-width:0; border:1px solid var(--nb-border); border-radius:var(--nb-radius-panel); background:var(--nb-surface); }
+.nb-asset-market { grid-area:market; display:flex; flex-direction:column; padding:20px; }
+.nb-asset-market__heading { display:flex; align-items:start; justify-content:space-between; gap:12px; }
+.nb-asset-eyebrow { font-size:14px; color:var(--nb-muted); margin-bottom:8px; }
+.nb-asset-price { font-size:36px; line-height:1.15; font-weight:600; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+.nb-asset-change { display:flex; flex-wrap:wrap; gap:4px 8px; min-height:20px; margin-top:8px; font-size:13px; }
+.nb-asset-change.is-positive { color:#40c98d; }
+.nb-asset-change.is-negative { color:#ff887a; }
+.nb-asset-muted { color:var(--nb-muted); }
+.nb-asset-plot { flex:1 0 200px; min-height:200px; margin-top:20px; position:relative; color:var(--nb-chart-primary); }
+.nb-asset-plot > svg,.nb-asset-chart-empty { position:absolute; inset:0; }
+.nb-asset-plot svg { width:100%; height:100%; display:block; overflow:visible; }
+.nb-asset-chart-dot { position:absolute; width:8px; height:8px; background:var(--nb-chart-primary); border:2px solid var(--nb-surface); border-radius:50%; transform:translate(-50%,-50%); pointer-events:none; }
+.nb-asset-chart-scrubber { position:absolute; inset:0; width:100%; height:100%; padding:0; margin:0; opacity:0; cursor:crosshair; }
+.nb-asset-plot:focus-within { outline:2px solid var(--nb-border-strong); outline-offset:8px; border-radius:4px; }
+.nb-asset-axis { display:flex; justify-content:space-between; gap:8px; font-size:11px; color:var(--nb-muted); margin-top:12px; min-height:16px; }
+.nb-asset-chart-footer { display:flex; align-items:center; margin-top:16px; }
+.nb-asset-ranges { display:flex; gap:4px; }
+.nb-asset-ranges button { border:0; border-radius:var(--nb-radius-control); min-width:40px; min-height:36px; padding:6px 10px; background:transparent; font:inherit; font-size:12px; color:var(--nb-muted); cursor:pointer; }
+.nb-asset-ranges button:hover { color:var(--nb-text); background:var(--nb-raised); }
+.nb-asset-ranges button[aria-pressed="true"] { color:var(--nb-text); background:var(--nb-raised); }
+.nb-asset-ranges button:focus-visible { outline:2px solid var(--nb-text); outline-offset:2px; }
+.nb-asset-chart-empty { height:100%; display:flex; flex-direction:column; gap:16px; align-items:center; justify-content:center; color:var(--nb-muted); font-size:14px; text-align:center; }
+.nb-asset-chart-loading { height:1px; width:100%; background:var(--nb-border); }
+.nb-asset-feed-error { color:var(--nb-muted); font-size:12px; }
+.nb-asset-feed-error button { background:none; border:0; color:var(--nb-text); text-decoration:underline; cursor:pointer; }
+.nb-asset-holdings { grid-area:holdings; align-self:start; padding:24px; }
+.nb-asset-quantity { margin-top:6px; }
+.nb-asset-trade { grid-area:trade; display:flex; flex-direction:column; overflow:hidden; }
+.nb-asset-activity { grid-area:activity; align-self:start; min-width:0; }
+@container main (max-width:55rem) {
+ .nb-asset-layout { grid-template-columns:minmax(0,1fr); grid-template-areas:"market" "trade" "holdings" "activity"; }
+ .nb-asset-trade { width:100%; max-width:none; }
+}
+@container main (max-width:40rem) {
+ .nb-asset-market,.nb-asset-holdings { padding:20px 16px; }
+ .nb-asset-market__heading { display:block; }
+ .nb-asset-price { font-size:32px; }
+ .nb-asset-ranges button { min-height:44px; min-width:44px; }
+ .nb-asset-header h1 { font-size:26px; }
+}

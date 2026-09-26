@@ -1,0 +1,125 @@
+/* Shared host components. Do not add per-page button colors or radii. */
+.nb-button {
+	@apply inline-flex items-center justify-center gap-2;
+	box-sizing: border-box;
+	min-height: var(--nb-control-height);
+	padding: 10px 16px;
+	border: 1px solid transparent;
+	border-radius: var(--nb-radius-control);
+	font-family: inherit;
+	font-size: var(--nb-text-body);
+	font-weight: 600;
+	line-height: 20px;
+	text-decoration: none;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background-color var(--nb-motion-fast), border-color var(--nb-motion-fast), color var(--nb-motion-fast);
+}
+.nb-button.nb-button--primary { background:var(--nb-accent); color:var(--nb-inverse); }
+.nb-button.nb-button--primary:hover:not(:disabled) { background:var(--nb-accent-hover); }
+.nb-button.nb-button--secondary { background:var(--nb-raised); color:var(--nb-text); }
+.nb-button.nb-button--secondary:hover:not(:disabled) { background:var(--nb-hover); }
+.nb-button.nb-button--ghost { background:transparent; color:var(--nb-muted); }
+.nb-button.nb-button--ghost:hover:not(:disabled) { background:var(--nb-raised); color:var(--nb-text); }
+.nb-button:focus-visible { outline:2px solid var(--nb-text); outline-offset:3px; }
+.nb-button:disabled,.nb-button[data-disabled] { opacity:.45; cursor:not-allowed; }
+.nb-button > svg { flex-shrink:0; width:16px; height:16px; }
+.nb-button--icon { width:44px; padding:10px; }
+
+.nb-app-header__home { font-size:var(--nb-text-body); gap:8px; }
+.nb-nav__item { border-radius:var(--nb-radius-control); }
+.nb-profile-trigger:hover { background:var(--nb-raised); }
+/* The logo is a link, not a button: no hover treatment. Keyboard focus keeps its ring. */
+.nb-app-header .nb-app-header__home:hover { background:transparent; color:var(--nb-text); }
+.nb-nav__item:hover,.nb-blueprint-button:hover { background:var(--nb-hover); }
+.nb-main__title { font-weight:600; }
+.nb-stack { gap:var(--nb-space-6); }
+.nb-overview-grid { gap:var(--nb-space-4); }
+/* Give the balance/action group a separate section break before activity. */
+.nb-stack--overview { gap:calc(var(--nb-space-4) * 2); }
+.nb-stack--home { gap:var(--nb-space-6); }
+.nb-section-heading { margin-bottom:var(--nb-space-5); }
+.nb-section-heading h2 { font-size:var(--nb-text-section); }
+.nb-subnav { font-size:var(--nb-text-body); }
+.nb-data-table-scroll { background:var(--nb-surface); border-color:var(--nb-border); border-radius:var(--nb-radius-panel); }
+.nb-data-table th { color:var(--nb-muted); background:var(--nb-surface); }
+.nb-data-table th,.nb-data-table td { padding:16px 20px; border-color:var(--nb-border); }
+.nb-data-table tbody tr:hover { background:rgb(255 255 255 / .025); }
+.nb-data-table td { font-variant-numeric:tabular-nums; }
+.nb-document-state { background:var(--nb-raised); color:var(--nb-muted); border-radius:var(--nb-radius-sm); }
+.nb-checkout-links small { color:var(--nb-muted); }
+.nb-checkout-links th:nth-child(4) { width:12rem; }
+.nb-checkout-links td:first-child a { font-weight:500; text-decoration:none; }
+.nb-checkout-links td:first-child a:hover { text-decoration:underline; text-underline-offset:3px; }
+.nb-checkout-links td:first-child small { overflow:hidden; text-overflow:ellipsis; }
+.nb-checkout-links-empty { min-height:280px; }
+.nb-history-frame { padding:16px; border:1px solid var(--nb-border); border-radius:var(--nb-radius-panel); background:var(--nb-surface); overflow:hidden; }
+.nb-table-hint { display:none; margin:0; color:var(--nb-muted); font-size:var(--nb-text-small); }
+.nb-invoice-library [role="status"],.nb-checkout-links [role="status"] { color:var(--nb-muted); font-size:var(--nb-text-body); }
+
+.nb-invoice-form :is(input,textarea,select),.nb-card-create :is(input,textarea,select) { border-radius:var(--nb-radius-control); }
+
+@container main (max-width:40rem) {
+	.nb-stack--overview { gap:var(--nb-space-6); }
+	.nb-stack--home { gap:var(--nb-space-4); }
+	.nb-table-hint { display:block; }
+	.nb-data-table-scroll.nb-checkout-links-scroll { overflow:visible; }
+	.nb-checkout-links table { min-width:0; table-layout:auto; }
+	.nb-checkout-links thead { display:none; }
+	.nb-checkout-links tbody { display:block; }
+	.nb-checkout-links tr { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 12px; padding:16px; border-bottom:1px solid var(--nb-border); }
+	.nb-checkout-links tr:last-child { border:0; }
+	.nb-checkout-links td { border:0; padding:0; min-width:0; }
+	.nb-checkout-links td:first-child { grid-column:1/-1; }
+	.nb-checkout-links td:nth-child(3) { text-align:right; color:var(--nb-muted); }
+	.nb-checkout-links td:last-child { grid-column:1/-1; margin-top:4px; }
+	.nb-checkout-links-actions { justify-content:flex-start; }
+}
+@media (prefers-reduced-motion:reduce) {
+	.nb-button,.nb-nav__item { transition:none; }
+}
+
+.nb-cards-chart,.nb-cards-preview { padding:24px; }
+@container main (max-width:54rem) { .nb-cards-chart,.nb-cards-preview { padding:16px; } }
+
+/* Shell identity: wordmark in the header, icons in the sidebar. */
+.nb-app-header__home { color:var(--nb-text); font-size:15px; font-weight:600; letter-spacing:-0.01em; gap:10px; padding-inline:6px 10px; }
+.nb-nav__item { display:flex; align-items:center; gap:10px; }
+.nb-nav__icon { flex-shrink:0; opacity:.8; }
+.nb-nav__item[aria-current="page"] .nb-nav__icon { opacity:1; }
+
+/* Back navigation: one quiet control, left edge aligned with the page title. */
+.nb-back { display:inline-flex; align-items:center; gap:4px; align-self:flex-start; min-height:32px; margin:0 0 12px -8px; padding:4px 10px 4px 6px; border:0; border-radius:var(--nb-radius-control); background:transparent; color:var(--nb-muted); font:inherit; font-size:var(--nb-text-body); font-weight:500; cursor:pointer; transition:background-color var(--nb-motion-fast),color var(--nb-motion-fast); }
+.nb-back:hover:not(:disabled) { background:var(--nb-raised); color:var(--nb-text); }
+.nb-back:focus-visible { outline:2px solid var(--nb-text); outline-offset:2px; }
+.nb-back:disabled { opacity:.45; cursor:not-allowed; }
+.nb-back > svg { flex-shrink:0; width:16px; height:16px; }
+@media (prefers-reduced-motion:reduce) { .nb-back { transition:none; } }
+
+/* Invite confirmation. */
+.nb-invite-dialog { width:min(400px, calc(100vw - 32px)); max-width:400px; padding:32px; text-align:center; }
+.nb-invite-pictogram { display:block; width:96px; height:96px; margin:0 auto 16px; }
+.nb-invite-dialog .nb-invite-title { margin-bottom:8px; font-size:22px; font-weight:600; line-height:28px; letter-spacing:-0.02em; }
+.nb-invite-dialog .nb-invite-description { color:var(--nb-muted); font-size:var(--nb-text-body); line-height:22px; }
+.nb-invite-link { display:flex; align-items:center; justify-content:center; gap:8px; margin:24px 0 16px; padding:12px 14px; border:1px solid var(--nb-border); border-radius:var(--nb-radius-control); background:var(--nb-bg); color:var(--nb-text); font-size:13px; }
+.nb-invite-link svg { flex-shrink:0; color:var(--nb-muted); }
+.nb-invite-link span { min-width:0; overflow-wrap:anywhere; }
+.nb-invite-link--field { box-sizing:border-box; width:100%; font:inherit; font-size:13px; text-align:center; }
+.nb-invite-link--field:focus-visible { outline:2px solid var(--nb-text); outline-offset:2px; }
+.nb-invite-dialog .nb-invite-done { width:100%; }
+
+/* Which account an operator is acting in, beside the wordmark. */
+.nb-current-account { min-width:0; margin:0 0 0 12px; padding-left:16px; border-left:1px solid var(--nb-border); overflow:hidden; color:var(--nb-muted); font-size:13px; line-height:20px; white-space:nowrap; text-overflow:ellipsis; }
+.nb-current-account strong { color:var(--nb-text); font-weight:600; }
+@media (max-width:40rem) { .nb-current-account { display:none; } }
+
+.nb-visually-hidden { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+
+/* Brand lockup: gold B mark + Bay Pay name. */
+.nb-wordmark { align-items:center; color:inherit; display:inline-flex; gap:0.5rem; line-height:1; white-space:nowrap; }
+.nb-wordmark__img { display:block; height:20px; width:auto; }
+.nb-auth__brand .nb-wordmark__img { height:24px; }
+.nb-mark { display:block; flex-shrink:0; height:22px; width:22px; color:var(--nb-gold, #d4b56a); }
+.nb-wordmark__name { font-size:0.9375rem; font-weight:600; letter-spacing:-0.03em; }
+.nb-auth__brand .nb-mark { height:26px; width:26px; }
+.nb-auth__brand .nb-wordmark__name { font-size:1.0625rem; }

@@ -101,3 +101,46 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  Bay Pay — a Whop-powered crypto neobank (React CRA frontend + FastAPI backend + MongoDB).
+  Restored from a GitHub clone (missing .env files were rebuilt). Backend uses Whop OAuth
+  (client_id = app_id app_Ajy3GAR61PgCa2, API key supplied by user).
+  User reported: clicking sign-in / "Continue with Whop" shows "url is invalid".
+  Root cause: the preview redirect URI was not whitelisted in the Whop app's OAuth settings,
+  so Whop returned {"error":"invalid_request","error_description":"redirect_uri is invalid"}.
+  Fix: registered the preview redirect URI via `whop apps update ... --redirect_uris` (kept existing ones).
+
+frontend:
+  - task: "Whop OAuth sign-in redirect (redirect_uri invalid fix)"
+    implemented: true
+    working: true
+    file: "frontend/src/whop/api.js, frontend/src/components/AppPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        -working: "NA"
+          agent: "main"
+          comment: "User reported 'url is invalid' when signing in. Confirmed Whop returned 'redirect_uri is invalid' for the preview callback URL. Fixed by whitelisting https://7bf23e58-98af-436c-95d1-1fc4c7324e90.preview.emergentagent.com/api/auth/callback in the Whop app OAuth redirect_uris. Verified via curl: /api/auth/login now 302s to https://whop.com/oauth/authorize (login/consent) with no error. Needs UI verification that clicking 'Continue with Whop' reaches Whop's login page without the invalid-url error. NOTE: a full real Whop login cannot be automated (requires the user's real Whop account)."
+        -working: true
+          agent: "testing"
+          comment: "✅ VERIFIED FIX SUCCESSFUL via UI testing. Test flow: (1) Landing page loads correctly at / with dark theme, Bay Pay branding, hero section, and crypto badges. (2) Navigating to /app shows auth gate with 'Sign in to Bay Pay' title and 'Continue with Whop' button. (3) Clicking 'Continue with Whop' successfully redirects through OAuth flow: /api/auth/login (302) → api.whop.com/oauth/authorize (302) → whop.com/oauth/authorize (307/308) → whop.com/login (200). (4) Final page is Whop's login form ('Enter your email') with NO 'url is invalid' or 'redirect_uri is invalid' errors. Network trace confirms correct redirect_uri parameter in OAuth request. The bug is FIXED - users can now successfully reach Whop's login page to authenticate."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus: []
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    -agent: "main"
+     message: "Fixed the 'url is invalid' sign-in bug by whitelisting the preview redirect URI in Whop OAuth. Please verify in the UI: (1) landing page loads at /, (2) navigating to /app shows the 'Continue with Whop' gate, (3) clicking 'Continue with Whop' redirects to Whop (whop.com/oauth/authorize or the Google login handoff) and does NOT show 'url is invalid' or 'redirect_uri is invalid'. Do NOT attempt to complete a real Whop login (no credentials); just confirm the redirect reaches Whop's login/consent screen cleanly. Backend base URL is via REACT_APP_BACKEND_URL."
+    -agent: "testing"
+     message: "✅ TESTING COMPLETE - BUG FIX VERIFIED. The 'url is invalid' / 'redirect_uri is invalid' bug is FIXED. All test steps passed: (1) Landing page renders correctly with Bay Pay branding and dark theme. (2) Auth gate at /app displays properly with 'Continue with Whop' button. (3) OAuth redirect flow works correctly - clicking sign-in successfully redirects to whop.com/login with NO errors. Network trace confirms proper OAuth parameters including the whitelisted redirect_uri. Users can now successfully initiate Whop authentication. No further action needed on this bug."

@@ -13,6 +13,8 @@ const NAV_LINKS = [
 const LOGO = "/images/baypay-logo.png";
 const CARD = "/images/baypay-card.png";
 
+const TRUST = ["Visa", "Apple Pay", "Google Pay", "Whop", "USDC", "Solana Pay"];
+
 function Icon({ children }) {
   return (
     <svg className="nb-lp-feature__icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -130,6 +132,13 @@ export default function Landing() {
           <ul className="nb-lp-hero__stats"><li>Instant virtual cards</li><li>Non-custodial</li><li>BTC · ETH · SOL · USDC</li></ul>
         </div>
         <div className="nb-lp-hero__stage"><img className="nb-lp-hero__card" src={CARD} alt="Bay Pay Visa debit card" /></div>
+      </section>
+
+      <section className="nb-lp-trust" aria-label="Trusted by">
+        <p className="nb-lp-trust__lead">Zero-fee spending, connected to the money tools you already trust</p>
+        <ul className="nb-lp-trust__logos">
+          {TRUST.map((name) => (<li className="nb-lp-trust__logo" key={name}>{name}</li>))}
+        </ul>
       </section>
 
       <section className="nb-lp-chains" id="chains" aria-label="Supported chains and assets">

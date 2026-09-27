@@ -122,15 +122,31 @@ async def valid_access_token(request: Request):
     return new_access, apply
 
 
+def origin_of(request: Request) -> str:
+    """Public origin of the incoming request (works behind the ingress/proxy).
+    Falls back to APP_ORIGIN env so nothing breaks if headers are absent."""
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host")
+    proto = (request.headers.get("x-forwarded-proto") or "https").split(",")[0].strip()
+    if host:
+        host = host.split(",")[0].strip()
+        if host and "localhost" not in host and "127.0.0.1" not in host:
+            return f"{proto}://{host}"
+    return APP_ORIGIN
+
+
+def redirect_uri_of(request: Request) -> str:
+    return f"{origin_of(request)}/api/auth/callback"
+
+
 @api.get("/auth/login")
-async def login():
+async def login(request: Request):
     state = secrets.token_urlsafe(24)
     verifier = secrets.token_urlsafe(64)
     nonce = secrets.token_urlsafe(16)
     params = {
         "response_type": "code",
         "client_id": CLIENT_ID,
-        "redirect_uri": REDIRECT_URI,
+        "redirect_uri": redirect_uri_of(request),
         "scope": " ".join(SCOPES),
         "state": state,
         "nonce": nonce,
@@ -144,27 +160,28 @@ async def login():
 
 @api.get("/auth/callback")
 async def callback(request: Request, code: str = None, state: str = None, error: str = None):
+    app_origin = origin_of(request)
     if error:
-        return RedirectResponse(f"{APP_ORIGIN}/?auth_error={error}", status_code=302)
+        return RedirectResponse(f"{app_origin}/?auth_error={error}", status_code=302)
     stored = dec(request.cookies.get("whop_pkce"))
     if not code or not state or not stored:
-        return RedirectResponse(f"{APP_ORIGIN}/?auth_error=expired", status_code=302)
+        return RedirectResponse(f"{app_origin}/?auth_error=expired", status_code=302)
     data = json.loads(stored)
     if data.get("state") != state:
-        return RedirectResponse(f"{APP_ORIGIN}/?auth_error=state_mismatch", status_code=302)
+        return RedirectResponse(f"{app_origin}/?auth_error=state_mismatch", status_code=302)
     async with httpx.AsyncClient(timeout=15) as c:
         r = await c.post(f"{OAUTH}/token", json={
             "grant_type": "authorization_code",
             "code": code,
-            "redirect_uri": REDIRECT_URI,
+            "redirect_uri": redirect_uri_of(request),
             "client_id": CLIENT_ID,
             "code_verifier": data["verifier"],
         })
     if r.is_error:
         logger.error("token exchange failed: %s", r.text)
-        return RedirectResponse(f"{APP_ORIGIN}/?auth_error=token_exchange", status_code=302)
+        return RedirectResponse(f"{app_origin}/?auth_error=token_exchange", status_code=302)
     granted = r.json()
-    resp = RedirectResponse(f"{APP_ORIGIN}/app", status_code=302)
+    resp = RedirectResponse(f"{app_origin}/app", status_code=302)
     resp.delete_cookie("whop_pkce", path="/")
     resp.set_cookie("whop_access", enc(granted["access_token"]), max_age=granted.get("expires_in", 3600), **COOKIE_BASE)
     if granted.get("refresh_token"):

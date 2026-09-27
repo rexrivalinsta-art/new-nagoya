@@ -3565,3 +3565,91 @@ html,body { background:var(--nb-bg); color:var(--nb-text); color-scheme:dark; }
   .nb-lp__mobile-scrim { display: none; }
 }
 
+
+/* ============================================================
+   CONTRAST FIX + TRUST ROW (appended — wins the cascade)
+   ============================================================ */
+
+/* ---- Crisp, high-contrast headings on the dark background ---- */
+.nb-lp .nb-lp-hero__title {
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+}
+.nb-lp .nb-lp-hero__title span:last-child {
+  background: linear-gradient(100deg, #ffffff 0%, #9ec5ff 55%, #6ea8ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.nb-lp .nb-lp-hero__sub { color: rgba(255, 255, 255, 0.74); }
+.nb-lp .nb-lp-section__title {
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+}
+.nb-lp .nb-lp-section__sub { color: rgba(255, 255, 255, 0.66); }
+.nb-lp .nb-lp-hero__stats { color: rgba(255, 255, 255, 0.7); }
+.nb-lp .nb-lp-section__eyebrow {
+  color: #6ea8ff;
+  -webkit-text-fill-color: #6ea8ff;
+  background: none;
+}
+/* card showcase + tiers text clarity */
+.nb-lp .nb-lp-showcase__sub,
+.nb-lp .nb-lp-tier__blurb { color: rgba(255, 255, 255, 0.68); }
+.nb-lp .nb-lp-checklist li { color: rgba(255, 255, 255, 0.82); }
+.nb-lp .nb-lp-step h3,
+.nb-lp .nb-lp-tier h3,
+.nb-lp .nb-lp-showcase__copy h2 { color: #ffffff; -webkit-text-fill-color: #ffffff; }
+.nb-lp .nb-lp-step p { color: rgba(255, 255, 255, 0.66); }
+.nb-lp .nb-lp-faq__item summary { color: #ffffff; }
+.nb-lp .nb-lp-faq__item p { color: rgba(255, 255, 255, 0.66); }
+
+/* ---- Trusted-by strip (under hero) ---- */
+.nb-lp-trust {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0.5rem clamp(1.25rem, 4vw, 2.5rem) 2.6rem;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.nb-lp-trust__lead {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  margin: 0 0 1.3rem;
+}
+.nb-lp-trust__logos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem 0.9rem;
+}
+.nb-lp-trust__logo {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding: 0.55rem 1.05rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: color 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+.nb-lp-trust__logo:hover {
+  color: #ffffff;
+  border-color: rgba(110, 168, 255, 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px -16px rgba(37, 99, 235, 0.7);
+}
+@media (max-width: 40rem) {
+  .nb-lp-trust__logo { font-size: 0.85rem; padding: 0.48rem 0.85rem; }
+}
+

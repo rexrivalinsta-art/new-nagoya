@@ -1,5 +1,14 @@
+import { useState } from "react";
 import { loginUrl } from "../whop/api";
 import { COINS, CoinBadge } from "./crypto-marks";
+
+const NAV_LINKS = [
+  { href: "#features", label: "Features" },
+  { href: "#chains", label: "Chains" },
+  { href: "#cards", label: "Cards" },
+  { href: "#pricing", label: "Pricing" },
+  { href: "#faq", label: "FAQ" },
+];
 
 const LOGO = "/images/baypay-logo.png";
 const CARD = "/images/baypay-card.png";
@@ -56,22 +65,58 @@ function Cta({ className, label = "Get started" }) {
 }
 
 export default function Landing() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
   return (
     <div className="nb-lp" data-testid="landing-page">
       <div className="nb-lp-glow" aria-hidden />
       <header className="nb-lp__nav">
         <a className="nb-lp__logo" href="#top" aria-label="Bay Pay home"><img src={LOGO} alt="Bay Pay" /></a>
         <nav className="nb-lp__nav-links" aria-label="Sections">
-          <a href="#features">Features</a>
-          <a href="#chains">Chains</a>
-          <a href="#cards">Cards</a>
-          <a href="#faq">FAQ</a>
+          {NAV_LINKS.map((l) => (<a key={l.href} href={l.href}>{l.label}</a>))}
         </nav>
         <div className="nb-lp__nav-actions">
           <a className="nb-lp__signin" href={loginUrl} data-testid="landing-signin">Sign in</a>
           <a className="nb-lp-btn nb-lp-btn--primary nb-lp__nav-cta" href={loginUrl}>Get started</a>
+          <button
+            type="button"
+            className={`nb-lp__burger${menuOpen ? " is-open" : ""}`}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="nb-lp-mobile-menu"
+            onClick={() => setMenuOpen((v) => !v)}
+            data-testid="landing-burger"
+          >
+            <span /><span /><span />
+          </button>
         </div>
       </header>
+
+      <div
+        className={`nb-lp__mobile-scrim${menuOpen ? " is-open" : ""}`}
+        onClick={closeMenu}
+        aria-hidden
+      />
+      <aside
+        id="nb-lp-mobile-menu"
+        className={`nb-lp__mobile${menuOpen ? " is-open" : ""}`}
+        aria-hidden={!menuOpen}
+        data-testid="landing-mobile-menu"
+      >
+        <span className="nb-lp__mobile-label">Menu</span>
+        <nav className="nb-lp__mobile-links" aria-label="Mobile navigation">
+          {NAV_LINKS.map((l) => (
+            <a key={l.href} href={l.href} onClick={closeMenu}>
+              {l.label}
+              <Arrow />
+            </a>
+          ))}
+        </nav>
+        <div className="nb-lp__mobile-actions">
+          <a className="nb-lp__mobile-signin" href={loginUrl} onClick={closeMenu}>Sign in</a>
+          <a className="nb-lp-btn nb-lp-btn--primary nb-lp__mobile-cta" href={loginUrl} onClick={closeMenu}>Get started<Arrow /></a>
+        </div>
+      </aside>
 
       <section className="nb-lp-hero" id="top">
         <div className="nb-lp-hero__inner">
@@ -136,7 +181,7 @@ export default function Landing() {
             <Cta className="nb-lp-showcase__cta" />
           </div>
         </div>
-        <div className="nb-lp-tiers">
+        <div className="nb-lp-tiers" id="pricing">
           {TIERS.map((t) => (
             <article className={`nb-lp-tier${t.featured ? " nb-lp-tier--featured" : ""}`} key={t.name}>
               {t.featured ? <span className="nb-lp-tier__flag">Most popular</span> : null}

@@ -3594,16 +3594,6 @@ html,body { background:var(--nb-bg); color:var(--nb-text); color-scheme:dark; }
   -webkit-text-fill-color: #6ea8ff;
   background: none;
 }
-/* card showcase + tiers text clarity */
-.nb-lp .nb-lp-showcase__sub,
-.nb-lp .nb-lp-tier__blurb { color: rgba(255, 255, 255, 0.68); }
-.nb-lp .nb-lp-checklist li { color: rgba(255, 255, 255, 0.82); }
-.nb-lp .nb-lp-step h3,
-.nb-lp .nb-lp-tier h3,
-.nb-lp .nb-lp-showcase__copy h2 { color: #ffffff; -webkit-text-fill-color: #ffffff; }
-.nb-lp .nb-lp-step p { color: rgba(255, 255, 255, 0.66); }
-.nb-lp .nb-lp-faq__item summary { color: #ffffff; }
-.nb-lp .nb-lp-faq__item p { color: rgba(255, 255, 255, 0.66); }
 
 /* ---- Trusted-by strip (under hero) ---- */
 .nb-lp-trust {
